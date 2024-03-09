@@ -20,7 +20,11 @@ const COMPILED_COMPONENTS_CACHE = new Map()
  * @returns {Promise<Object>} Returns a payload containing the rendered HTML, CSS, JS, and other relevant data.
  * @throws {Error} Throws an error if the compilation or rendering fails.
  */
-export async function html_server({ component, buildStatic = true, format = 'esm' }) {
+export async function html_server({
+  component,
+  buildStatic = true,
+  format = 'esm',
+}) {
   let cache_key
   if (!buildStatic) {
     cache_key = JSON.stringify({
@@ -94,6 +98,9 @@ export async function html_server({ component, buildStatic = true, format = 'esm
     )
 
     vol.writeFileSync(modulePath, moduleCode)
+
+    const originalFsReadFileSync = fs.readFileSync
+
     try {
       // Override the readFileSync function temporarily
       fs.readFileSync = (path, options) => {
@@ -112,9 +119,12 @@ export async function html_server({ component, buildStatic = true, format = 'esm
         html: rendered.html,
         css: rendered.css.code,
         js: res.dom,
-      } 
+      }
+    } catch (error) {
+      console.log('error', error)
+    } finally {
+      fs.readFileSync = originalFsReadFileSync
     }
-
   } else {
     payload = {
       js: res.dom,
